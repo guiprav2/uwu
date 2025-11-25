@@ -511,6 +511,12 @@ function compile(root) {
       d.el(x, { placeholder: () => wfeval(x, expr) });
     }
 
+    if (x.getAttribute('wf-textcontent')) {
+      let expr = x.getAttribute('wf-textcontent');
+      x.removeAttribute('wf-textcontent');
+      d.el(x, { textContent: () => wfeval(x, expr) });
+    }
+
     if (x.getAttribute('wf-innerhtml')) {
       let expr = x.getAttribute('wf-innerhtml');
       x.removeAttribute('wf-innerhtml');
