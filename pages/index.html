@@ -40,27 +40,20 @@
           <div class="flex items-center gap-0.5 text-gray-400">
             <button
               class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-fa-clone"
-              wf-onclick="post('main.cloneThread')"
-              wf-if="state.main.thread.logs.filter(x =&gt; !x.priming).length"
-              value=""
-            ></button>
-            <button
-              class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-qrcode"
-              wf-if="state.main.thread.logs.filter(x =&gt; !x.priming).length"
-              hidden=""
+              wf-onclick="post('main.clone')"
               value=""
             ></button>
             <button
               class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-filter_outline"
-              wf-class="{{state.main.showFilter &amp;&amp; 'bg-gray-200 text-gray-800'}} {{state.main.options.filter.length &amp;&amp; 'text-blue-600 hover:text-blue-600'}}"
-              wf-onclick="post('main.toggleShowFilter', event)"
-              wf-if="state.main.displayedThreads.length &amp;&amp; (state.main.options.filter.length || state.main.tags.length)"
+              wf-if="state.app.displayedProjects.length &amp;&amp; (state.app.options.filter.length || state.app.tags.length)"
               value=""
+              wf-onclick="post('app.toggleShowFilter', event)"
+              wf-class="{{state.app.showFilter &amp;&amp; 'bg-gray-200 text-gray-800'}} {{state.app.options.filter.length &amp;&amp; 'text-blue-600 hover:text-blue-600'}}"
             ></button>
             <button
               class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-archive_search"
-              wf-onclick="post('main.toggleArchives', event)"
-              wf-class="{{state.main.panel === 'archives' &amp;&amp; 'bg-gray-200 text-gray-800'}}"
+              wf-class="{{state.app.panel === 'archives' &amp;&amp; 'bg-gray-200 text-gray-800'}}"
+              wf-onclick="post('app.toggleArchives', event)"
               value=""
             ></button>
           </div>
@@ -70,16 +63,16 @@
         <!-- Display currently selected tags -->
         <div
           class="flex items-center gap-1.5 flex-wrap"
-          wf-if="state.main.showFilter"
+          wf-if="state.app.showFilter"
         >
           <div
             class="text-sm px-2 py-0.5 rounded-full shrink-0 flex items-center gap-2 bg-blue-200 text-blue-600"
-            wf-map="x of state.main.options.filter.slice().sort()"
+            wf-map="x of state.app.options.filter.slice().sort()"
           >
             <div class="relative -top-[1px]">{{x}}</div>
             <button
               class="relative -top-[1px] outline-none"
-              wf-onclick="post('main.rmfilter', x)"
+              wf-onclick="post('app.rmfilter', x)"
               value=""
             >
               ×
@@ -87,13 +80,13 @@
           </div>
           <button
             class="nf nf-fa-plus text-gray-400 outline-none text-sm px-1 py-0.5"
-            wf-onclick="post('main.toggleFilterInput')"
-            wf-if="!state.main.showFilterInput &amp;&amp; state.main.options.filter.length"
+            wf-onclick="post('app.toggleFilterInput')"
+            wf-if="!state.app.showFilterInput &amp;&amp; state.app.options.filter.length"
             value=""
           ></button>
           <div
             class="relative min-w-20 flex-1"
-            wf-if="state.main.showFilterInput || !state.main.options.filter.length"
+            wf-if="state.app.showFilterInput || !state.app.options.filter.length"
           >
             <input
               type="text"
@@ -101,26 +94,23 @@
               class="border px-2 py-0.5 outline-none w-32 text-sm rounded-full text-center w-full"
               value=""
               id="taginput"
-              wf-onkeyup="post('main.filterKeyUp', event)"
-              wf-onblur="post('main.toggleFilterInput')"
+              wf-onkeyup="post('app.filterKeyUp', event)"
+              wf-onblur="post('app.toggleFilterInput')"
             />
             <div
               class="border p-2 rounded bg-white shadow max-h-48 overflow-auto absolute left-1 right-1 flex flex-col text-sm gap-1 top-[110%]"
-              wf-if="document.querySelector('#taginput').value.trim() || state.main.tagSuggestions.length"
+              wf-if="document.querySelector('#taginput').value.trim() || state.app.tagSuggestions.length"
               hidden=""
             >
               <button
                 class="underline text-blue-600"
-                wf-map="x of state.main.tagSuggestions.slice().sort()"
-                wf-onclick="post('main.filter', x)"
+                wf-map="x of state.app.tagSuggestions.slice().sort()"
+                wf-onclick="post('app.filter', x)"
                 value=""
               >
                 {{x}}
               </button>
-              <div
-                class="text-center"
-                wf-if="!state.main.tagSuggestions.length"
-              >
+              <div class="text-center" wf-if="!state.app.tagSuggestions.length">
                 no such tag found
               </div>
             </div>
@@ -149,8 +139,7 @@
               value=""
             >
               <div class="flex items-center gap-1.5">
-                <div class="text-left">{{x.title || 'Untitled'}}
-                </div>
+                <div class="text-left">{{x.title || 'Untitled'}}</div>
                 <div
                   class="text-base nf nf-md-fire text-gray-400 group-hover:text-gray-300"
                   wf-if="x.tags?.includes?.('eromanga')"
@@ -159,18 +148,18 @@
               <div class="flex gap-1.5 items-center">
                 <div
                   class="nf nf-fa-archive hidden group-hover:block text-gray-300 flex justify-center items-center relative top-[1px] hover:text-gray-100"
-                  wf-if="!thread.archived"
-                  wf-onclick="post('main.toggleThreadArchived', event, thread)"
+                  wf-if="!x.archived"
+                  wf-onclick="post('app.toggleArchived', event, x)"
                 ></div>
                 <div
                   class="nf hidden group-hover:block text-gray-300 nf-md-replay flex justify-center items-center hover:text-gray-100"
-                  wf-if="thread.archived"
-                  wf-onclick="post('main.toggleThreadArchived', event, thread)"
+                  wf-if="x.archived"
+                  wf-onclick="post('app.toggleArchived', event, x)"
                 ></div>
                 <div
                   class="nf hidden group-hover:block text-gray-300 nf-oct-x flex justify-center items-center relative top-[1px] hover:text-gray-100"
-                  wf-if="thread.archived"
-                  wf-onclick="post('main.rmThread', event, thread)"
+                  wf-if="x.archived"
+                  wf-onclick="post('main.rm', event, x)"
                 ></div>
               </div>
             </button>
@@ -179,44 +168,57 @@
 
         <button
           class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none"
+          value=""
           wf-if="!state.app.viewingArchived"
           wf-onclick="post('app.newProject')"
-          value=""
         >
           New Project
-        </button>
-        <button
-          class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none sm:hidden"
-          wf-onclick="post('main.toggleSidebar')"
-          value=""
-        >
-          Close
         </button>
       </div>
       <div class="flex-1 flex flex-col">
         <div
-          class="flex-1 flex flex-col justify-center items-center gap-4 py-16"
+          class="flex-1 flex flex-col justify-center items-center gap-4 py-16 border-l border-gray-300"
           wf-if="!state.app.project"
         >
           <div class="nf nf-fa-star text-6xl text-gray-300"></div>
           <div class="text-gray-400">Start a new project!</div>
         </div>
         <div
-          class="flex-1 bg-white border-l border-gray-300 flex flex-col relative sm:pl-8 h-screen p-3 sm:p-8 gap-3 sm:gap-8"
+          class="bg-white border-l border-gray-300 flex flex-col relative sm:pl-8 h-screen p-3 sm:p-8 gap-3 sm:gap-8 overflow-hidden"
           wf-if="state.app.project"
           wf-class=""
         >
-          <div wf-if="state.app.project.name">
-            <div class="flex items-center group flex-wrap gap-y-1 gap-x-1.5">
-              <div class="text-xl sm:text-3xl">
-                {{state.app.project.name || '...'}}
-              </div>
+          <div wf-if="state.app.project.title">
+            <div class="flex justify-between">
+              <div class="flex items-center group flex-wrap gap-y-1 gap-x-1.5">
+                <div class="text-xl sm:text-3xl">
+                  {{state.app.project.title || '...'}}
+                </div>
 
-              <div
-                class="text-3xl"
-                wf-if="state.app.project.tags.includes('eromanga')"
-              >
-                🥵
+                <div
+                  class="text-3xl"
+                  wf-if="state.app.project.tags.includes('eromanga')"
+                >
+                  🥵
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <div
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf nf-fa-chevron_left justify-center"
+                  wf-if="state.app.tmp.page &gt; 0"
+                  wf-onclick="state.app.tmp.page--, d.update()"
+                ></div>
+                <button
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-plus"
+                  value=""
+                  wf-onclick="post('app.newPage')"
+                  wf-if="state.app.tmp.page === state.app.project.pages.length"
+                ></button>
+                <div
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-chevron_right"
+                  wf-if="state.app.tmp.page &lt; state.app.project.pages.length - 1"
+                  wf-onclick="state.app.tmp.page++, d.update()"
+                ></div>
               </div>
             </div>
             <div
@@ -274,18 +276,23 @@
             </div>
           </div>
 
-          <div class="flex-1 overflow-auto pb-1 grid grid-cols-2 gap-2">
+          <div
+            class="flex-1 overflow-auto pb-1 grid grid-cols-2 gap-2"
+            wf-if="state.app.project.pages[state.app.tmp.page]"
+          >
             <textarea
-              class="flex-1 whitespace-pre-wrap font-thin text-2xl placeholder:italic sticky top-0 bottom-0"
-              wf-value="state.app.page.transcription"
+              class="flex-1 whitespace-pre-wrap font-thin text-2xl placeholder:italic sticky top-0 bottom-0 outline-none"
+              wf-value="state.app.project.pages[state.app.tmp.page].transcription"
               placeholder="Add a transcription of this page here..."
               value=""
+              wf-onkeyup="post('app.persist')"
+              spellcheck="false"
             ></textarea>
 
             <img
               class="w-full sticky top-0 bottom-0"
               src="https://i1.nhentai.net/galleries/2966373/3.jpg"
-              wf-src="state.app.page.img"
+              wf-src="state.app.project.pages[state.app.tmp.page].img"
             />
           </div>
         </div>

@@ -1,7 +1,9 @@
 export default class App {
   state = {
+    options: { filter: [] },
     panel: 'projects',
     projects: [],
+    tmp: {},
     viewingArchived: false,
     get tags() {
       let projects = this.panel === 'archive' ? this.projects : this.displayedProjects;
@@ -47,13 +49,9 @@ export default class App {
       if (project.pages.length) {
         let lastPage = project.pages[project.pages.length - 1];
         let lastUrl = lastPage?.img || '';
-        let match = lastUrl.match(/(\d+)(?=\.[^./]+$)/);
-        if (!match) img = lastUrl;
-        else {
-          let width = match[1].length;
-          let next = String(parseInt(match[1], 10) + 1).padStart(width, '0');
-          img = lastUrl.replace(match[1], next);
-        }
+        let parts = lastUrl.split('/');
+        let num = Number(parts.at(-1).split('.')[0]);
+        img = parts.slice(0, -1).join('/') + `/${num + 1}.jpg`;
       } else {
         let [btn, digits] = await showModal('PromptDialog', { title: '6-digit number' });
         if (btn !== 'ok') return;
