@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialogs.html</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <script>
+      window.rootPrefix = /^\/(files|preview)\//.test(location.pathname)
+        ? location.pathname.split('/').slice(0, 4).join('/')
+        : '/';
+    </script>
+    <script type="module" src="../webfoundry/ifdesigner.js"></script>
+    <script src="../webfoundry/head.js"></script>
+  </head>
+  <body
+    class="flex flex-col [&amp;&gt;div:first-child]:flex-1 min-h-screen"
+    style="display: none"
+  >
+    <div class="p-16 grid xl:grid-cols-3">
+      <div class="flex flex-col gap-4">
+        <div class="text-3xl">PromptDialog</div>
+        <div
+          id="PromptDialog"
+          class="rounded-lg p-4 bg-neutral-100/80 backdrop-blur-md flex flex-col gap-2 w-72"
+        >
+          <div>{{this.props.title}}</div>
+          <input
+            value=""
+            class="w-full px-3 rounded border border-gray-200 py-0.5 bg-white/80"
+            wf-value="this.props.value"
+            wf-onkeydown="this.keyDown(event)"
+          />
+          <div class="flex gap-2">
+            <button
+              class="flex-1 bg-neutral-200/50 py-1 rounded-md hover:bg-neutral-200"
+              value=""
+              wf-onclick="this.cancel()"
+            >
+              Cancel</button
+            ><button
+              class="flex-1 py-1 rounded-md text-neutral-50 bg-gray-900/80 hover:bg-gray-900"
+              value=""
+              wf-onclick="this.ok()"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
