@@ -145,11 +145,12 @@
           <div class="" wf-map="x of state.app.displayedProjects">
             <button
               class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 flex items-center justify-between group text-sm hover:bg-gray-900 hover:text-white outline-none w-full lightweight"
-              wf-onclick="post('main.openThread', thread)"
+              wf-onclick="post('app.selectProject', x)"
               value=""
             >
               <div class="flex items-center gap-1.5">
-                <div class="text-left">{{x.name}}</div>
+                <div class="text-left">{{x.title || 'Untitled'}}
+                </div>
                 <div
                   class="text-base nf nf-md-fire text-gray-400 group-hover:text-gray-300"
                   wf-if="x.tags?.includes?.('eromanga')"
@@ -179,7 +180,7 @@
         <button
           class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none"
           wf-if="!state.app.viewingArchived"
-          wf-onclick="post('main.createNewThread')"
+          wf-onclick="post('app.newProject')"
           value=""
         >
           New Project
@@ -194,7 +195,7 @@
       </div>
       <div class="flex-1 flex flex-col">
         <div
-          class="flex-1 flex flex-col justify-center items-center gap-4"
+          class="flex-1 flex flex-col justify-center items-center gap-4 py-16"
           wf-if="!state.app.project"
         >
           <div class="nf nf-fa-star text-6xl text-gray-300"></div>
