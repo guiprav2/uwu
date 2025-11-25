@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <script>
+      window.rootPrefix = /^\/(files|preview)\//.test(location.pathname)
+        ? location.pathname.split('/').slice(0, 4).join('/')
+        : '/';
+    </script>
+    <script type="module" src="../webfoundry/ifdesigner.js"></script>
+    <script src="../webfoundry/head.js"></script>
+  </head>
+  <body
+    class="flex flex-col [&amp;&gt;div:first-child]:flex-1 min-h-screen"
+    style="display: none"
+  >
+    <div
+      class="min-h-screen flex flex-col sm:flex-row w-screen"
+      wf-onattach="post('app.init')"
+    >
+      <style>
+        em {
+          font-style: normal;
+          font-weight: bold;
+        }
+      </style>
+      <div
+        class="flex-col gap-3 p-8 z-10 shadow-xl flex w-screen sm:w-80 md:w-96 min-h-screen bg-neutral-100"
+        wf-class="{{replaces flex: state.main.sidebarOpen ? 'flex' : 'hidden sm:flex'}}"
+      >
+        <div class="flex items-center gap-2 pl-3">
+          <div class="nf nf-oct-log text-lg"></div>
+          <div>Works</div>
+          <div class="flex-1"></div>
+          <div class="flex items-center gap-0.5 text-gray-400">
+            <button
+              class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-fa-clone"
+              wf-onclick="post('main.cloneThread')"
+              wf-if="state.main.thread.logs.filter(x =&gt; !x.priming).length"
+              value=""
+            ></button>
+            <button
+              class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-qrcode"
+              wf-if="state.main.thread.logs.filter(x =&gt; !x.priming).length"
+              hidden=""
+              value=""
+            ></button>
+            <button
+              class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-filter_outline"
+              wf-class="{{state.main.showFilter &amp;&amp; 'bg-gray-200 text-gray-800'}} {{state.main.options.filter.length &amp;&amp; 'text-blue-600 hover:text-blue-600'}}"
+              wf-onclick="post('main.toggleShowFilter', event)"
+              wf-if="state.main.displayedThreads.length &amp;&amp; (state.main.options.filter.length || state.main.tags.length)"
+              value=""
+            ></button>
+            <button
+              class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-md-archive_search"
+              wf-onclick="post('main.toggleArchives', event)"
+              wf-class="{{state.main.panel === 'archives' &amp;&amp; 'bg-gray-200 text-gray-800'}}"
+              value=""
+            ></button>
+            <button
+              class="nf nf-md-cog p-1.5 outline-none rounded-full hover:text-gray-800"
+              wf-onclick="post('main.toggleSettings')"
+              wf-class="{{state.main.panel === 'settings' &amp;&amp; 'bg-gray-200 text-gray-800'}}"
+              value=""
+            ></button>
+          </div>
+        </div>
+
+        <!-- Typeahead input -->
+        <!-- Display currently selected tags -->
+        <div
+          class="flex items-center gap-1.5 flex-wrap"
+          wf-if="state.main.showFilter"
+        >
+          <div
+            class="text-sm px-2 py-0.5 rounded-full shrink-0 flex items-center gap-2 bg-blue-200 text-blue-600"
+            wf-map="x of state.main.options.filter.slice().sort()"
+          >
+            <div class="relative -top-[1px]">{{x}}</div>
+            <button
+              class="relative -top-[1px] outline-none"
+              wf-onclick="post('main.rmfilter', x)"
+              value=""
+            >
+              ×
+            </button>
+          </div>
+          <button
+            class="nf nf-fa-plus text-gray-400 outline-none text-sm px-1 py-0.5"
+            wf-onclick="post('main.toggleFilterInput')"
+            wf-if="!state.main.showFilterInput &amp;&amp; state.main.options.filter.length"
+            value=""
+          ></button>
+          <div
+            class="relative min-w-20 flex-1"
+            wf-if="state.main.showFilterInput || !state.main.options.filter.length"
+          >
+            <input
+              type="text"
+              placeholder="add filter"
+              class="border px-2 py-0.5 outline-none w-32 text-sm rounded-full text-center w-full"
+              value=""
+              id="taginput"
+              wf-onkeyup="post('main.filterKeyUp', event)"
+              wf-onblur="post('main.toggleFilterInput')"
+            />
+            <div
+              class="border p-2 rounded bg-white shadow max-h-48 overflow-auto absolute left-1 right-1 flex flex-col text-sm gap-1 top-[110%]"
+              wf-if="document.querySelector('#taginput').value.trim() || state.main.tagSuggestions.length"
+              hidden=""
+            >
+              <button
+                class="underline text-blue-600"
+                wf-map="x of state.main.tagSuggestions.slice().sort()"
+                wf-onclick="post('main.filter', x)"
+                value=""
+              >
+                {{x}}
+              </button>
+              <div
+                class="text-center"
+                wf-if="!state.main.tagSuggestions.length"
+              >
+                no such tag found
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Suggestion dropdown -->
+
+        <!-- Settings side panel -->
+        <!-- Settings side panel -->
+        <div class="mt-2 flex-1" wf-if="state.main.panel === 'settings'">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-1.5">
+                <div>🏷️</div>
+                <span class="text-gray-700 text-sm"> Automatic tagging </span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="peer hidden"
+                  wf-checked="state.main.options.autotag"
+                  wf-onchange="post('main.toggleAutoTagging', event)"
+                  value="on"
+                />
+                <div
+                  class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500"
+                ></div>
+                <div
+                  class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5"
+                ></div>
+              </label>
+            </div>
+          </div>
+          <div></div>
+        </div>
+        <div
+          class="flex-1 flex flex-col justify-center items-center gap-4"
+          wf-if="state.main.panel === 'threads' &amp;&amp; !state.main.displayedThreads.length"
+        >
+          <div class="nf nf-fa-star text-6xl text-gray-300"></div>
+          <div class="text-gray-400">Start a new thread!</div>
+        </div>
+        <div
+          class="flex-1 flex flex-col gap-1.5 min-h-0 overflow-auto basis-0 min-h-10"
+          wf-if="state.main.displayedThreads.length"
+        >
+          <div wf-map="thread of state.app.displayedWorks" class="">
+            <button
+              class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 flex items-center justify-between group text-sm hover:bg-gray-900 hover:text-white outline-none w-full lightweight"
+              wf-onclick="post('main.openThread', thread)"
+              value=""
+            >
+              <div class="flex items-center gap-1.5">
+                <div class="text-left">{{work.name}}</div>
+                <div
+                  class="text-base nf nf-md-fire text-gray-400 group-hover:text-gray-300"
+                  wf-if="thread.tags?.includes?.('erotica')"
+                ></div>
+              </div>
+              <div class="flex gap-1.5 items-center">
+                <div
+                  class="nf nf-fa-archive hidden group-hover:block text-gray-300 flex justify-center items-center relative top-[1px] hover:text-gray-100"
+                  wf-if="!thread.archived"
+                  wf-onclick="post('main.toggleThreadArchived', event, thread)"
+                ></div>
+                <div
+                  class="nf hidden group-hover:block text-gray-300 nf-md-replay flex justify-center items-center hover:text-gray-100"
+                  wf-if="thread.archived"
+                  wf-onclick="post('main.toggleThreadArchived', event, thread)"
+                ></div>
+                <div
+                  class="nf hidden group-hover:block text-gray-300 nf-oct-x flex justify-center items-center relative top-[1px] hover:text-gray-100"
+                  wf-if="thread.archived"
+                  wf-onclick="post('main.rmThread', event, thread)"
+                ></div>
+              </div>
+            </button>
+          </div>
+        </div>
+        <button
+          class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none"
+          wf-if="state.main.panel === 'settings'"
+          wf-onclick="post('main.backup')"
+          value=""
+        >
+          Export Backup
+        </button>
+        <button
+          class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none"
+          wf-if="!state.main.viewingArchived &amp;&amp; state.main.thread.logs.length"
+          wf-onclick="post('main.createNewThread')"
+          value=""
+        >
+          New Thread
+        </button>
+        <button
+          class="rounded-lg border border-[#dfe2e5] bg-white shadow px-3 py-2 group text-center hover:text-white hover:bg-gray-900 outline-none sm:hidden"
+          wf-onclick="post('main.toggleSidebar')"
+          value=""
+        >
+          Close
+        </button>
+      </div>
+      <div
+        class="flex-1 bg-white border-l border-gray-300 flex flex-col sm:w-[calc(100vw_-_64rem)] relative sm:pl-8 h-screen p-3 sm:p-8 gap-3 sm:gap-8"
+        wf-class="{{replaces flex: state.main.sidebarOpen ? 'hidden sm:flex' : 'flex'}}"
+      >
+        <div
+          class="absolute nf nf-md-menu flex justify-center p-3 sm:hidden rounded-full bottom-5 right-5 bg-gray-100 text-gray-600"
+          wf-onclick="post('main.toggleSidebar')"
+        ></div>
+        <div wf-if="state.main.thread.name || state.main.displayedLogs.length">
+          <div class="flex items-center group flex-wrap gap-y-1 gap-x-1.5">
+            <div class="text-xl sm:text-3xl">
+              {{state.app.work.name || '...'}}
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex gap-1">
+                <div
+                  class="text-3xl"
+                  wf-if="state.main.thread.tags.includes('erotica')"
+                >
+                  🥵
+                </div>
+              </div>
+              <div class="gap-1 hidden group-hover:flex">
+                <button
+                  class="nf text-gray-500 text-xl w-8 h-8 nf-oct-pencil"
+                  wf-if="!state.main.threadtmp.suggestingName"
+                  wf-onclick="post('main.renameThread')"
+                  value=""
+                ></button>
+                <button
+                  class="nf text-gray-500 text-xl w-8 h-8 nf-md-replay"
+                  wf-onclick="post('main.suggestThreadName')"
+                  wf-if="!state.main.threadtmp.suggestingName"
+                  value=""
+                ></button>
+              </div>
+              <div
+                class="nf text-gray-500 text-xl w-8 h-8 flex justify-center items-center nf-fa-spinner animate-spin"
+                wf-onclick="post('main.suggestThreadName')"
+                wf-if="state.main.threadtmp.suggestingName"
+                hidden=""
+              ></div>
+              <div
+                class="nf nf-md-chat_processing_outline text-3xl animate-pulse -my-4"
+                wf-if="state.main.threadtmp.busy || state.main.threadtmp.tw || state.main.threadtmp.wc"
+                wf-class="{{state.main.reprompt &amp;&amp; 'text-yellow-500'}}"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-1.5 group flex-wrap mt-3 overflow-auto max-h-[15vh]"
+          >
+            <!-- Display current thread tags -->
+            <div class="text-sm relative -top-[1px]">
+              {{state.app.thread.tags?.length ? 'Tags:' : 'Tags'}}
+            </div>
+            <div
+              class="text-sm px-2 py-0.5 rounded-full shrink-0 flex items-center gap-2 bg-green-200 text-green-600"
+              wf-map="x of state.app.thread.tags?.slice?.()?.sort?.() || []"
+            >
+              <div class="relative -top-[1px]">{{x}}</div>
+              <button
+                class="relative -top-[1px] outline-none"
+                wf-onclick="post('main.rmThreadTag', x)"
+                value=""
+              >
+                ×
+              </button>
+            </div>
+            <button
+              class="nf nf-fa-plus text-gray-400 outline-none text-sm px-1 py-0.5"
+              wf-if="!state.main.threadtmp.showTagInput"
+              wf-onclick="post('main.toggleWorkTagInput')"
+              value=""
+            ></button>
+            <label
+              class="relative min-w-20"
+              wf-if="state.main.threadtmp.showTagInput"
+            >
+              <input
+                type="text"
+                placeholder="add tag"
+                class="border px-2 py-0.5 outline-none text-sm rounded-full text-center w-full"
+                id="taginput2"
+                wf-onkeyup="post('main.workTagKeyUp', event)"
+                wf-onblur="setTimeout(() =&gt; post('main.toggleWorkTagInput'), 200)"
+                value=""
+              />
+              <!-- Suggestions box -->
+              <div
+                class="border p-2 rounded bg-white shadow max-h-48 overflow-auto absolute left-1 right-1 flex flex-col text-sm gap-1 top-[110%] z-10"
+                wf-if="state.main.worktmp.tagSuggestions?.length"
+                hidden=""
+              >
+                <button
+                  class="underline text-blue-600 outline-none"
+                  wf-map="x of state.main.worktmp.tagSuggestions"
+                  wf-onclick="post('main.addWorkTag', x)"
+                  value=""
+                >
+                  {{x}}
+                </button>
+              </div>
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button
+                class="nf text-gray-500 nf-md-replay hidden group-hover:block px-1.5 py-0.5 relative -top-[1px] shrink-0"
+                wf-if="!state.main.threadtmp.showTagInput &amp;&amp; !state.main.threadtmp.suggestingTags"
+                wf-onclick="post('main.suggestThreadTags')"
+                value=""
+              ></button>
+              <div
+                class="nf text-gray-500 text-xl flex justify-center items-center nf-fa-spinner animate-spin h-[1em]"
+                wf-onclick="post('main.suggestThreadName')"
+                wf-if="state.main.threadtmp.suggestingTags"
+                hidden=""
+              ></div>
+            </div>
+            <!-- Button to show the tag input -->
+            <!-- Tag input field -->
+          </div>
+        </div>
+        <div class="flex-1 overflow-auto pb-1 gap-4 grid" id="autoscroll">
+          <div>
+            <img
+              class=""
+              src="https://i1.nhentai.net/galleries/2966373/3.jpg"
+            />
+          </div>
+        </div>
+
+        <div
+          id="inputbox"
+          class="rounded-lg border bg-white shadow flex items-center justify-between group text-sm hover:bg-gray-100 relative border-[#dfe2e5]"
+        >
+          <textarea
+            class="flex-1 bg-transparent outline-none resize-none p-4 sm:pr-4 pr-16 h-[3.2rem] max-h-[10rem]"
+            placeholder="Type a message"
+            wf-onkeydown="rawctrls.app.actions.msgKeyDown(event)"
+            wf-onkeyup="rawctrls.app.actions.msgKeyUp(event)"
+            value=""
+          ></textarea>
+          <div
+            class="self-stretch flex border-l border-[#dfe2e5] relative items-center"
+            wf-if="state.main.models.length || state.main.loadingModels"
+          >
+            <div
+              class="absolute bottom-[100%] right-0 pb-2 min-w-64"
+              wf-if="state.main.showModels"
+              id="modellist"
+              hidden=""
+            >
+              <div
+                class="border p-2 rounded bg-white shadow max-h-48 overflow-auto left-1 right-1 flex flex-col text-sm gap-1 z-10"
+              >
+                <div class="flex flex-col gap-0.5">
+                  <div
+                    class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mt-1"
+                  >
+                    xAI
+                  </div>
+                  <button
+                    class="underline text-blue-600 outline-none text-left"
+                    wf-onclick="post('main.changeModel', 'xai:xai-latest')"
+                    value=""
+                  >
+                    xAI · xai-latest
+                  </button>
+                </div>
+                <div
+                  class="flex flex-col gap-0.5"
+                  wf-map="x of state.main.models"
+                >
+                  <div
+                    class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mt-2"
+                    wf-if="x.heading"
+                  >
+                    {{x.heading}}
+                  </div>
+                  <button
+                    class="underline text-blue-600 outline-none text-left"
+                    wf-onclick="post('main.changeModel', x.value)"
+                    value=""
+                  >
+                    {{x.label || x.value}}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              class="px-4 h-full text-gray-600 hover:text-gray-900 outline-none"
+              wf-if="!state.main.loadingModels"
+              wf-onclick="post('main.toggleShowModels')"
+              value=""
+            >
+              {{state.app.modelLabel || state.app.options.model}}
+            </button>
+            <div
+              class="nf text-gray-500 text-xl w-8 h-8 flex justify-center items-center nf-fa-spinner animate-spin mx-4"
+              wf-onclick="post('main.suggestThreadName')"
+              wf-if="state.main.loadingModels"
+              hidden=""
+            ></div>
+          </div>
+          <!-- Model selector button -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
