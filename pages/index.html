@@ -159,7 +159,7 @@
                 <div
                   class="nf hidden group-hover:block text-gray-300 nf-oct-x flex justify-center items-center relative top-[1px] hover:text-gray-100"
                   wf-if="x.archived"
-                  wf-onclick="post('main.rm', event, x)"
+                  wf-onclick="post('app.rm', event, x)"
                 ></div>
               </div>
             </button>
@@ -212,7 +212,7 @@
                   class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-plus"
                   value=""
                   wf-onclick="post('app.newPage')"
-                  wf-if="state.app.tmp.page === state.app.project.pages.length"
+                  wf-if="state.app.tmp.page &gt;= state.app.project.pages.length - 1"
                 ></button>
                 <div
                   class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-chevron_right"

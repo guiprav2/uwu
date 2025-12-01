@@ -45,22 +45,61 @@ export default class App {
     newPage: async () => {
       let { project } = this.state;
       if (!project) return;
+      let urlPattern = /^https:\/\/[^/]+\/galleries\/\d+\/\d+\.\w+$/i;
+      let promptForUrl = async () => {
+        let [btn, url] = await showModal('PromptDialog', { title: 'Image URL' });
+        if (btn !== 'ok') return '';
+        let trimmed = (url || '').trim();
+        if (!urlPattern.test(trimmed)) {
+          alert('Please enter a URL like https://blabla.com/galleries/123456/1.jpg');
+          return '';
+        }
+        return trimmed;
+      };
+      let nextFrom = url => {
+        let match = url.match(/^(https:\/\/[^/]+\/galleries\/\d+\/)(\d+)(\.\w+)$/i);
+        if (!match) return '';
+        let prefix = match[1];
+        let current = match[2];
+        let ext = match[3];
+        let next = String(Number(current) + 1).padStart(current.length, '0');
+        return `${prefix}${next}${ext}`;
+      };
       let img = '';
       if (project.pages.length) {
         let lastPage = project.pages[project.pages.length - 1];
         let lastUrl = lastPage?.img || '';
-        let parts = lastUrl.split('/');
-        let num = Number(parts.at(-1).split('.')[0]);
-        img = parts.slice(0, -1).join('/') + `/${num + 1}.jpg`;
+        img = nextFrom(lastUrl);
+        if (!img) {
+          alert('Last page image URL is invalid. Please start with a valid galleries URL.');
+          return;
+        }
       } else {
-        let [btn, digits] = await showModal('PromptDialog', { title: '6-digit number' });
-        if (btn !== 'ok') return;
-        img = `https://i1.nhentai.net/galleries/${digits}/1.jpg`;
+        img = await promptForUrl();
+        if (!img) return;
       }
-      if (!img) return;
       let page = { img, transcription: '' };
       project.pages.push(page);
       this.state.tmp.page = project.pages.length - 1;
+      await post('app.persist');
+    },
+    toggleArchives: () => {
+      if (this.state.panel === 'archive') return this.state.panel = 'projects';
+      this.state.panel = 'archive';
+    },
+    toggleArchived: async (ev, x) => {
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
+      x.archived = !x.archived;
+      if (!this.state.displayedProjects.length) this.state.panel = 'projects';
+      await post('app.persist');
+    },
+    rm: async (ev, x) => {
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
+      let i = this.state.projects.indexOf(x);
+      i >= 0 && this.state.projects.splice(i, 1);
+      if (!this.state.displayedProjects.length) this.state.panel = 'projects';
       await post('app.persist');
     },
   };
