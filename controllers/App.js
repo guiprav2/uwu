@@ -1,4 +1,5 @@
 import '../other/env.js';
+import brk from '../other/brk.js';
 import complete, { listModels } from '../other/complete.js';
 
 export default class App {
@@ -258,7 +259,7 @@ export default class App {
         let res = await complete(logs, { simple: true, model: this.state.model, signal: controller.signal });
         this.state.tmp.logs ??= [];
         this.state.tmp.logs.push(res);
-        this.state.project.pages[this.state.tmp.page].transcription = res.content.trim();
+        this.state.project.pages[this.state.tmp.page].transcription = await brk(res.content.trim());
         await post('app.persist');
       } catch (err) {
         if (!controller.signal.aborted) console.error(err);
