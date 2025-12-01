@@ -40,7 +40,7 @@
           <div class="flex items-center gap-0.5 text-gray-400">
             <button
               class="nf p-1.5 outline-none rounded-full hover:text-gray-800 nf-fa-clone"
-              wf-onclick="post('main.clone')"
+              wf-onclick="post('app.clone')"
               value=""
             ></button>
             <button
@@ -179,6 +179,7 @@
         <div
           class="flex-1 flex flex-col justify-center items-center gap-4 py-16 border-l border-gray-300"
           wf-if="!state.app.project"
+          hidden=""
         >
           <div class="nf nf-fa-star text-6xl text-gray-300"></div>
           <div class="text-gray-400">Start a new project!</div>
@@ -201,6 +202,11 @@
                 >
                   🥵
                 </div>
+                <div
+                  class="nf nf-md-chat_processing_outline text-3xl animate-pulse -my-4"
+                  wf-if="state.app.tmp.busy"
+                  hidden=""
+                ></div>
               </div>
               <div class="flex gap-2">
                 <div
@@ -234,7 +240,7 @@
                 <div class="relative -top-[1px]">{{x}}</div>
                 <button
                   class="relative -top-[1px] outline-none"
-                  wf-onclick="post('main.rmTag', x)"
+                  wf-onclick="post('app.rmTag', x)"
                   value=""
                 >
                   ×
@@ -242,31 +248,31 @@
               </div>
               <button
                 class="nf nf-fa-plus text-gray-400 outline-none text-sm px-1 py-0.5"
-                wf-onclick="post('main.toggleTagInput')"
+                wf-onclick="post('app.toggleTagInput')"
                 value=""
               ></button>
               <label
                 class="relative min-w-20"
-                wf-if="state.main.projecttmp.showTagInput"
+                wf-if="state.app.tmp.showTagInput"
               >
                 <input
                   type="text"
                   placeholder="add tag"
                   class="border px-2 py-0.5 outline-none text-sm rounded-full text-center w-full"
                   id="taginput2"
-                  wf-onkeyup="post('main.tagKeyUp', event)"
-                  wf-onblur="setTimeout(() =&gt; post('main.toggleTagInput'), 200)"
+                  wf-onkeyup="post('app.tagKeyUp', event)"
+                  wf-onblur="setTimeout(() =&gt; post('app.toggleTagInput'), 200)"
                   value=""
                 />
                 <div
                   class="border p-2 rounded bg-white shadow max-h-48 overflow-auto absolute left-1 right-1 flex flex-col text-sm gap-1 top-[110%] z-10"
-                  wf-if="state.main.projecttmp.tagSuggestions?.length"
+                  wf-if="state.app.tmp.tagSuggestions?.length"
                   hidden=""
                 >
                   <button
                     class="underline text-blue-600 outline-none"
-                    wf-map="x of state.main.projecttmp.tagSuggestions"
-                    wf-onclick="post('main.addTag', x)"
+                    wf-map="x of state.app.tmp.tagSuggestions"
+                    wf-onclick="post('app.addTag', x)"
                     value=""
                   >
                     {{x}}
@@ -345,7 +351,7 @@
               </button>
               <div
                 class="nf text-gray-500 text-xl w-8 h-8 flex justify-center items-center nf-fa-spinner animate-spin mx-4"
-                wf-if="state.main.tmp.loadingModels"
+                wf-if="state.app.tmp.loadingModels"
                 hidden=""
               ></div>
               <div
