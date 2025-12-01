@@ -137,31 +137,30 @@ export default class App {
         return;
       }
       ev.target.value = '';
-      this.state.tmp.logs = [...(this.state.tmp.logs || []), { role: 'user', content: msg }];
-      await post('app.complete');
+      await post('app.complete', msg);
     },
-    complete: async () => {
+    complete: async msg => {
       if (this.state.tmp.busy || !this.state.project) return;
       this.state.tmp.busy = true;
       try {
-        let conversation = [...(this.state.tmp.logs || [])];
+        let logs = [...this.state.tmp.logs || []];
         let transcriptions = (this.state.project.pages || []).map((page, index) => {
           let text = page?.transcription?.trim ? page.transcription.trim() : '';
           return `${index + 1}. ${text || '(empty transcription)'}`;
         });
-        conversation.unshift({
+        logs.unshift({
           role: 'system',
           content: [
             `Project page transcriptions:\n\n${transcriptions.join('\n\n')}`,
-            `Below is the current page transcription. Make adjustments according to user prompt and respond with the bare revised transcription, nothing else.`,
+            `Below is the current page transcription. Make adjustments strictly according to user prompt, leaving all else unchanged, and respond with the full, bare revised transcription; nothing else.`,
           ],
         });
-        let res = await complete(conversation, { simple: true, model: this.state.model });
-        let choice = Array.isArray(res) ? res[0] : res;
-        if (!choice) return;
-        let content = Array.isArray(choice.content) ? choice.content.join('\n') : choice.content;
-        console.log(content);
-        this.state.tmp.logs = [...(this.state.tmp.logs || []), { role: choice.role || 'assistant', content }];
+        logs.push({ role: 'user', content: [`Current page transcription:`, this.state.project.pages[this.state.tmp.page].transcription] });
+        logs.push({ role: 'user', content: msg });
+        let res = await complete(logs, { simple: true, model: this.state.model });
+        this.state.tmp.logs ??= [];
+        this.state.tmp.logs.push(res);
+        this.state.project.pages[this.state.tmp.page].transcription = res.content.trim();
       } catch (err) {
         console.error(err);
       } finally {
