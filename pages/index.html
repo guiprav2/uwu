@@ -295,6 +295,66 @@
               wf-src="state.app.project.pages[state.app.tmp.page].img"
             />
           </div>
+          <div
+            id="inputbox"
+            class="rounded-lg border bg-white shadow flex items-center justify-between group text-sm hover:bg-gray-100 relative border-[#dfe2e5]"
+            wf-if="state.app.project.pages[state.app.tmp.page].transcription.trim()"
+          >
+            <textarea
+              class="flex-1 bg-transparent outline-none resize-none p-4 sm:pr-4 pr-16 max-h-[10rem] h-[3.25rem]"
+              placeholder="Type a message"
+              wf-onkeyup="rawctrls.app.actions.msgKeyUp(event)"
+              value=""
+              wf-onkeydown="rawctrls.app.actions.msgKeyDown(event)"
+            ></textarea>
+            <div
+              class="self-stretch flex border-l border-[#dfe2e5] relative items-center group"
+              wf-if="state.app.models.length || state.app.tmp.loadingModels"
+            >
+              <div
+                class="absolute bottom-[100%] right-0 pb-2 min-w-64"
+                wf-if="state.app.tmp.showModels"
+                id="modellist"
+                hidden=""
+              >
+                <div
+                  class="border p-2 rounded bg-white shadow max-h-48 overflow-auto left-1 right-1 flex flex-col text-sm gap-1 z-10 border-slate-300"
+                >
+                  <button
+                    class="text-blue-600 outline-none flex justify-between items-center gap-3 text-left"
+                    wf-onclick="post('app.changeModel', x.id)"
+                    value=""
+                    wf-map="x of state.app.models"
+                  >
+                    <div class="underline">{{x.id.split(':')[1]}}</div>
+                    <div
+                      class="text-sm truncate max-w-24 decoration-none text-slate-500 shrink-0"
+                    >
+                      {{new Date(x.created * 1000).toLocaleString('en-US', { month: 'short', year: 'numeric' })}}
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <button
+                class="px-4 h-full text-gray-600 hover:text-gray-900 outline-none truncate md:max-w-64 max-w-30"
+                wf-if="!state.app.tmp.loadingModels"
+                wf-onclick="post('app.toggleShowModels')"
+                value=""
+              >
+                {{state.app.model.split(':')[1]}}
+              </button>
+              <div
+                class="nf text-gray-500 text-xl w-8 h-8 flex justify-center items-center nf-fa-spinner animate-spin mx-4"
+                wf-if="state.main.tmp.loadingModels"
+                hidden=""
+              ></div>
+              <div
+                class="nf text-gray-500 text-xl w-8 h-8 justify-center items-center mx-4 nf-weather-refresh hidden group-hover:flex"
+                wf-onclick="post('app.listModels')"
+                wf-if="!state.app.tmp.loadingModels"
+              ></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
