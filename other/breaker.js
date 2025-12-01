@@ -10,6 +10,7 @@ export default class BasicUnicodeTransform extends Transform {
     this.stack = [];         // open delimiters
     this.nobreak = false;    // true when inside any pair
     this.pendingBreak = false;      // sentence end marker seen
+    this.pendingBreakDepth = null;  // stack depth when a break was scheduled
     this.pendingWhitespace = "";   // whitespace to replace with newline
     this.leadingBuffer = "";       // characters buffered before we decide to break
     this.prevChar = "";            // last processed character
@@ -23,6 +24,11 @@ export default class BasicUnicodeTransform extends Transform {
 
     this.SYMMETRIC = new Set(['"', "'"]);
     this.SENTENCE_ENDERS = new Set([".", "!", "?", "。", "！", "？"]);
+  }
+
+  cancelPendingBreak() {
+    this.pendingBreak = false;
+    this.pendingBreakDepth = null;
   }
 
   // --------------------------
@@ -91,6 +97,7 @@ export default class BasicUnicodeTransform extends Transform {
 
     if (this.isSentenceEnder(ch)) {
       this.pendingBreak = true;
+      this.pendingBreakDepth = this.stack.length;
     }
   }
 
@@ -112,7 +119,14 @@ export default class BasicUnicodeTransform extends Transform {
   }
 
   resolvePendingBreak(ch, pairAction) {
-    if (pairAction === "close" || this.nobreak)
+    if (pairAction === "close")
+      return "continue";
+
+    const deeperThanBreak = this.pendingBreak &&
+      this.pendingBreakDepth !== null &&
+      this.stack.length > this.pendingBreakDepth;
+
+    if (this.nobreak && !deeperThanBreak)
       return "continue";
 
     if (this.isSentenceStarterNeutral(ch, pairAction)) {
@@ -131,7 +145,7 @@ export default class BasicUnicodeTransform extends Transform {
     }
 
     if (this.isLowercase(ch)) {
-      this.pendingBreak = false;
+      this.cancelPendingBreak();
       return "continue";
     }
 
@@ -153,7 +167,7 @@ export default class BasicUnicodeTransform extends Transform {
     this.appendToAccumulator(this.leadingBuffer);
     this.pendingWhitespace = "";
     this.leadingBuffer = "";
-    this.pendingBreak = false;
+    this.cancelPendingBreak();
   }
 
   insertBreak() {
@@ -164,7 +178,7 @@ export default class BasicUnicodeTransform extends Transform {
     }
 
     this.pendingWhitespace = "";
-    this.pendingBreak = false;
+    this.cancelPendingBreak();
 
     if (this.leadingBuffer.length > 0) {
       this.accumulator = this.leadingBuffer;
