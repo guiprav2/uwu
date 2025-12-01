@@ -1,10 +1,237 @@
-import { Transform } from "node:stream";
-import { StringDecoder } from "node:string_decoder";
+class MiniEmitter {
+  constructor() {
+    this.listeners = new Map();
+  }
 
-export default class BasicUnicodeTransform extends Transform {
+  on(event, listener) {
+    if (!this.listeners.has(event))
+      this.listeners.set(event, new Set());
+    this.listeners.get(event).add(listener);
+    return this;
+  }
+
+  addListener(event, listener) {
+    return this.on(event, listener);
+  }
+
+  off(event, listener) {
+    if (!this.listeners.has(event))
+      return this;
+    if (!listener)
+      this.listeners.get(event).clear();
+    else
+      this.listeners.get(event).delete(listener);
+    return this;
+  }
+
+  removeListener(event, listener) {
+    return this.off(event, listener);
+  }
+
+  once(event, listener) {
+    const wrapper = (...args) => {
+      this.off(event, wrapper);
+      listener(...args);
+    };
+    return this.on(event, wrapper);
+  }
+
+  removeAllListeners(event) {
+    if (event == null)
+      this.listeners.clear();
+    else
+      this.listeners.delete(event);
+    return this;
+  }
+
+  emit(event, ...args) {
+    if (!this.listeners.has(event)) {
+      if (event === "error") {
+        const err = args[0] instanceof Error ? args[0] : new Error(args[0]);
+        throw err;
+      }
+      return false;
+    }
+    for (const listener of [...this.listeners.get(event)])
+      listener(...args);
+    return true;
+  }
+}
+
+class BrowserTransform extends MiniEmitter {
+  constructor(options = {}) {
+    super();
+    this.options = { ...options };
+    this.readable = true;
+    this.writable = true;
+    this.destroyed = false;
+    this._readEnded = false;
+    this._writeEnded = false;
+  }
+
+  push(chunk) {
+    if (chunk === null) {
+      if (this._readEnded)
+        return false;
+      this._readEnded = true;
+      this.emit("end");
+      return false;
+    }
+
+    this.emit("data", chunk);
+    return true;
+  }
+
+  write(chunk, encoding, callback) {
+    if (this.destroyed)
+      throw new Error("Stream is destroyed");
+
+    if (typeof encoding === "function") {
+      callback = encoding;
+      encoding = undefined;
+    }
+
+    const cb = typeof callback === "function" ? callback : () => {};
+    if (typeof this._transform !== "function") {
+      throw new Error("_transform is not implemented");
+    }
+
+    try {
+      this._transform(chunk, encoding, err => {
+        if (err) {
+          this.emit("error", err);
+          cb(err);
+          return;
+        }
+        cb();
+      });
+    } catch (err) {
+      this.emit("error", err);
+      cb(err);
+    }
+
+    return true;
+  }
+
+  end(chunk, encoding, callback) {
+    if (typeof chunk === "function") {
+      callback = chunk;
+      chunk = undefined;
+      encoding = undefined;
+    } else if (typeof encoding === "function") {
+      callback = encoding;
+      encoding = undefined;
+    }
+
+    if (chunk != null)
+      this.write(chunk, encoding);
+
+    const finish = err => {
+      if (err)
+        this.emit("error", err);
+      if (this._writeEnded)
+        return;
+      this._writeEnded = true;
+      this.emit("finish");
+      this.push(null);
+      callback?.(err);
+    };
+
+    if (typeof this._flush === "function") {
+      try {
+        this._flush(finish);
+      } catch (err) {
+        finish(err);
+      }
+    } else {
+      finish();
+    }
+
+    return this;
+  }
+
+  pipe(dest) {
+    this.on("data", chunk => {
+      if (typeof dest.write === "function")
+        dest.write(chunk);
+      else
+        dest.push?.(chunk);
+    });
+    this.once("end", () => dest.end?.());
+    this.on("error", err => dest.emit?.("error", err));
+    dest.emit?.("pipe", this);
+    return dest;
+  }
+
+  destroy(err) {
+    if (this.destroyed)
+      return;
+    this.destroyed = true;
+    if (err)
+      this.emit("error", err);
+    this.emit("close");
+  }
+}
+
+class BrowserStringDecoder {
+  constructor(encoding = "utf8") {
+    let normalized = encoding?.toLowerCase?.() || "utf8";
+    if (normalized === "utf8")
+      normalized = "utf-8";
+    if (normalized !== "utf-8")
+      throw new Error(`Unsupported encoding: ${encoding}`);
+    if (typeof TextDecoder === "undefined")
+      throw new Error("TextDecoder is not available in this environment");
+    this.decoder = new TextDecoder("utf-8");
+  }
+
+  write(chunk) {
+    if (chunk == null)
+      return "";
+    if (typeof chunk === "string")
+      return chunk;
+    return this.decoder.decode(this.asUint8Array(chunk), { stream: true });
+  }
+
+  end(chunk) {
+    let text = "";
+    if (chunk != null)
+      text += this.write(chunk);
+    text += this.decoder.decode();
+    return text;
+  }
+
+  asUint8Array(value) {
+    if (value instanceof Uint8Array)
+      return value;
+    if (value instanceof ArrayBuffer)
+      return new Uint8Array(value);
+    if (ArrayBuffer.isView(value))
+      return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+    if (typeof value === "number")
+      return new Uint8Array([value & 0xff]);
+    return new Uint8Array();
+  }
+}
+
+let TransformBase = BrowserTransform;
+let StringDecoderBase = BrowserStringDecoder;
+const IS_NODE = typeof process !== "undefined" && !!(process.versions?.node);
+if (IS_NODE) {
+  try {
+    ({ Transform: TransformBase } = await import("node:stream"));
+    ({ StringDecoder: StringDecoderBase } = await import("node:string_decoder"));
+  } catch (err) {
+    console.warn("Falling back to browser Transform implementation", err);
+    TransformBase = BrowserTransform;
+    StringDecoderBase = BrowserStringDecoder;
+  }
+}
+
+export default class BasicUnicodeTransform extends TransformBase {
   constructor() {
     super({ decodeStrings: false });
-    this.decoder = new StringDecoder("utf8");
+    this.decoder = new StringDecoderBase("utf8");
 
     this.accumulator = "";   // pending output chunk
     this.stack = [];         // open delimiters
