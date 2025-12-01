@@ -1,4 +1,4 @@
-import BreakerTransform from './breaker.js';
+import Breaker from './breaker.js';
 import fs from 'node:fs';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
@@ -28,12 +28,14 @@ await new Promise((resolve, reject) => {
 await new Promise((resolve, reject) => {
   let w = spawn('./whisper-cli', [
     '-f', MP3,
-    '-m', './ggml-large-v3-turbo-q5_0.bin',
+    //'-m', './ggml-large-v3-turbo-q5_0.bin',
+    '-m', './ggml-base-q5_1.bin',
+    //'-m', './ggml-tiny.en-q5_1.bin',
     '--no-timestamps',
     '--prompt', `"Always use quotation marks for dialogue," he said. "Bet extra careful not to confuse narration with dialogue though!" Follow these rules strictly.`,
   ], { stdio: ['ignore', 'pipe', 'ignore'] });
   let first = true;
-  w.stdout.pipe(new BreakerTransform()).on('data', x => { process.stdout.write(first ? x.toString().trimStart() : x); first = false });
+  w.stdout.pipe(new Breaker()).on('data', x => { process.stdout.write(first ? x.toString().trimStart() : x); first = false });
   w.on('exit', code => {
     if (code !== 0) { reject(new Error('whisper-cli failed')); return }
     resolve();

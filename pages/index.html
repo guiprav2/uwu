@@ -221,28 +221,31 @@
                 </div>
               </div>
               <div class="flex gap-2">
-                <div
-                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-cod-mic_filled"
-                  wf-onclick="post('app.transcribe')"
-                  wf-if="!state.app.tmp.busy"
-                  wf-class="{{replaces nf-cod-mic_filled: !state.app.tmp.recording ? 'nf-cod-mic_filled' : (state.app.tmp.transcribing ? 'nf-oct-check' : 'nf-oct-x')}}"
-                ></div>
-                <div
-                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf nf-fa-chevron_left justify-center"
-                  wf-if="state.app.tmp.page &gt; 0"
-                  wf-onclick="state.app.tmp.page--, d.update()"
-                ></div>
                 <button
-                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-plus"
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-cod-mic_filled disabled:opacity-50"
+                  value=""
+                  wf-onclick="post('app.transcribe')"
+                  wf-disabled="!state.app.project?.pages?.length || state.app.tmp.busy"
+                  wf-class="{{replaces nf-cod-mic_filled: !state.app.tmp.recording ? 'nf-cod-mic_filled' : (!state.app.tmp.transcribing ? 'nf-oct-check' : 'nf-oct-x')}}"
+                ></button
+                ><button
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf nf-fa-chevron_left justify-center disabled:opacity-50"
+                  value=""
+                  wf-onclick="state.app.tmp.page--, d.update()"
+                  wf-disabled="state.app.tmp.page &gt;= 0"
+                ></button>
+                <button
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-plus disabled:opacity-50"
                   value=""
                   wf-onclick="post('app.newPage')"
-                  wf-if="state.app.tmp.page &gt;= state.app.project.pages.length - 1"
+                  wf-disabled="state.app.tmp.page &gt;= state.app.project.pages.length - 1"
                 ></button>
-                <div
-                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-chevron_right"
-                  wf-if="state.app.tmp.page &lt; state.app.project.pages.length - 1"
+                <button
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-fa-chevron_right disabled:opacity-50"
+                  wf-disabled="state.app.tmp.page &gt;= state.app.project.pages.length - 1"
                   wf-onclick="state.app.tmp.page++, d.update()"
-                ></div>
+                  value=""
+                ></button>
               </div>
             </div>
             <div
