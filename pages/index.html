@@ -196,19 +196,37 @@
                   {{state.app.project.title || '...'}}
                 </div>
 
-                <div
-                  class="text-3xl"
-                  wf-if="state.app.project.tags.includes('eromanga')"
-                >
-                  🥵
+                <div class="flex items-center gap-2 ml-2">
+                  <div
+                    class="text-3xl"
+                    wf-if="state.app.project.tags.includes('eromanga')"
+                  >
+                    🥵
+                  </div>
+                  <div
+                    class="nf text-3xl animate-pulse nf-cod-mic_filled"
+                    wf-if="state.app.tmp.recording"
+                    hidden=""
+                  ></div>
+                  <div
+                    class="nf text-3xl animate-pulse nf-md-transcribe"
+                    wf-if="state.app.tmp.transcribing"
+                    hidden=""
+                  ></div>
+                  <div
+                    class="nf nf-md-chat_processing_outline text-3xl animate-pulse"
+                    wf-if="state.app.tmp.busy"
+                    hidden=""
+                  ></div>
                 </div>
-                <div
-                  class="nf nf-md-chat_processing_outline text-3xl animate-pulse -my-4"
-                  wf-if="state.app.tmp.busy"
-                  hidden=""
-                ></div>
               </div>
               <div class="flex gap-2">
+                <div
+                  class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf justify-center nf-cod-mic_filled"
+                  wf-onclick="post('app.transcribe')"
+                  wf-if="!state.app.tmp.busy"
+                  wf-class="{{replaces nf-cod-mic_filled: !state.app.tmp.recording ? 'nf-cod-mic_filled' : (state.app.tmp.transcribing ? 'nf-oct-check' : 'nf-oct-x')}}"
+                ></div>
                 <div
                   class="w-10 h-10 rounded-full bg-neutral-950/80 text-neutral-50 flex items-center nf nf-fa-chevron_left justify-center"
                   wf-if="state.app.tmp.page &gt; 0"
